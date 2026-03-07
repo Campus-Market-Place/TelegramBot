@@ -1,13 +1,16 @@
 import { Context, Markup } from "telegraf";
-import { loginOrSignup } from "../services/authService";
+//import { loginOrSignup } from "../services/authService";
 import { config } from "../config/config";
+import { mockLogin } from "../services/mockAuth.service";
+
 
 export async function startCommand(ctx: Context) {
   try {
     const telegramId = ctx.from?.id.toString()!;
     const username = ctx.from?.username || "unknown";
 
-    const auth = await loginOrSignup(telegramId, username);
+    //const auth = await loginOrSignup(telegramId, username);
+    const auth = await mockLogin(telegramId, username);
     const token = auth.token;
     const role = auth.user.role;
 
@@ -36,6 +39,7 @@ export async function startCommand(ctx: Context) {
     await ctx.reply(
       "Use menu below ⬇️",
       Markup.keyboard([["☰ Menu"]]).resize()
+     //await menuCommand(ctx);
     );
 
   } catch (error: any) {

@@ -29,6 +29,7 @@ export async function loginOrSignup(
   );
 
   console.log("Backend responded!");
+  console.log("Auth response:", response.data);
 
   return response.data;
 }
