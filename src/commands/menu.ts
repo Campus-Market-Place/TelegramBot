@@ -1,6 +1,6 @@
 import { Context, Markup } from "telegraf";
-//import { loginOrSignup } from "../services/authService";
-import { mockLogin } from "../services/mockAuth.service";
+import { loginOrSignup } from "../services/authService";
+//import { mockLogin } from "../services/mockAuth.service";
 import { config } from "../config/config";
 import { userMenuKeyboard } from "../keyboards/user.keyboard";
 import { sellerMenuKeyboard } from "../keyboards/seller.keyboard";
@@ -9,9 +9,17 @@ export async function menuCommand(ctx: Context) {
 
   const telegramId = ctx.from?.id.toString()!;
   const username = ctx.from?.username || "unknown";
+  const chatId = ctx.chat?.id;
+
+  if (!chatId) {
+    await ctx.reply("Chat ID not found.");
+    return;
+  }
+
+  const auth = await loginOrSignup(telegramId, username,chatId);
 
   //const auth = await mockLogin(telegramId, username);
-  const auth = await mockLogin(telegramId, username);
+  //const auth = await mockLogin(telegramId, username);
   const role = auth.user.role;
 
   if (role === "USER") {

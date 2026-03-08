@@ -6,13 +6,16 @@ export interface AuthResponse {
   user: {
     id: string;
     username: string;
+    chatId: number;
+
     role: "USER" | "SELLER";
   };
 }
 
 export async function loginOrSignup(
   telegramId: string,
-  username: string
+  username: string,
+  chatId: number
 ): Promise<AuthResponse> {
 
   console.log("Calling backend login...");
@@ -21,7 +24,8 @@ export async function loginOrSignup(
     `${config.BACKEND_URL}/auth/login`,
     {
       telegram_id: telegramId,
-      telegram_username: username
+      telegram_username: username,
+      telegram_chat_id:String(chatId)
     },
     {
       timeout: 15000 // ✅ VERY IMPORTANT
