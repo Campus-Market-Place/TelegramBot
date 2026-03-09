@@ -16,7 +16,7 @@ export async function menuCommand(ctx: Context) {
     return;
   }
 
-  const auth = await loginOrSignup(telegramId, username,chatId);
+  const auth = await loginOrSignup(telegramId, username, chatId);
 
   //const auth = await mockLogin(telegramId, username);
   //const auth = await mockLogin(telegramId, username);
@@ -25,7 +25,7 @@ export async function menuCommand(ctx: Context) {
   if (role === "USER") {
 
     const sellerFormUrl =
-      `${config.WEBREQUEST_URL}?telegramId=${telegramId}`;
+      `${config.WEBREQUEST_URL}?token=${auth.token}`;
 
     await ctx.reply(
       "User Menu:",
