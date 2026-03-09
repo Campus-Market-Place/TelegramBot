@@ -1,29 +1,4 @@
-export interface AuthResponse {
-    token: string;
-    user: {
-      id: string;
-      username: string;
-      role: "USER" | "SELLER";
-    };
-  }
-  
-  export async function mockLogin(
-    telegramId: string,
-    username: string
-  ): Promise<AuthResponse> {
-  
-    // simulate backend delay
-    await new Promise((res) => setTimeout(res, 300));
-  
-    return {
-      token: "mock-jwt-token",
-      user: {
-        id: telegramId,
-        username: username,
-        role: "USER" // change to SELLER to test seller UI
-      }
-    };
-  }
+
 
   // src/services/mockData.service.ts
 export async function getMockNotifications(telegramId: string) {

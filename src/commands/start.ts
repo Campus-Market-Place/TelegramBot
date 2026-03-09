@@ -1,20 +1,27 @@
 import { Context, Markup } from "telegraf";
-//import { loginOrSignup } from "../services/authService";
+import { loginOrSignup } from "../services/authService";
 import { config } from "../config/config";
-import { mockLogin } from "../services/mockAuth.service";
+//import { mockLogin } from "../services/mockAuth.service";
 
 
 export async function startCommand(ctx: Context) {
   try {
     const telegramId = ctx.from?.id.toString()!;
     const username = ctx.from?.username || "unknown";
+    const chatId = ctx.chat?.id;
 
-    //const auth = await loginOrSignup(telegramId, username);
-    const auth = await mockLogin(telegramId, username);
+if (!chatId) {
+  await ctx.reply("Chat ID not found.");
+  return;
+}
+
+    const auth = await loginOrSignup(telegramId, username,chatId);
+    //const auth = await mockLogin(telegramId, username);
     const token = auth.token;
     const role = auth.user.role;
 
     const marketplaceUrl = `${config.WEBAPP_URL}?token=${token}`;
+    console.log("Marketplace URL:", marketplaceUrl);
     const sellerDashboardUrl = `${config.WEBAPP_URL}/seller?token=${token}`;
 
     // --- MINI APP buttons ---
@@ -28,11 +35,15 @@ export async function startCommand(ctx: Context) {
       );
     } else {
       await ctx.reply(
-        `Hi ${username} 👋\nWelcome to Campus Marketplace 🛍`,
-        Markup.inlineKeyboard([
-          [Markup.button.webApp("🛍 Open Marketplace", marketplaceUrl)]
-        ])
-      );
+       
+          `Open the marketplace`,
+          Markup.inlineKeyboard([
+            [Markup.button.webApp("Open Marketplace", marketplaceUrl)]
+          ])
+        );
+           
+       
+     
     }
 
     // --- BOT MENU button ---
