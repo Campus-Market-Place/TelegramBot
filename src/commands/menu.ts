@@ -26,6 +26,7 @@ export async function menuCommand(ctx: Context) {
 
     const sellerFormUrl =
       `${config.WEBREQUEST_URL}?token=${auth.token}`;
+      console.log("Seller form URL:", sellerFormUrl);
 
     await ctx.reply(
       "User Menu:",
