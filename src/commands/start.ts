@@ -22,7 +22,10 @@ if (!chatId) {
 
     const marketplaceUrl = `${config.WEBAPP_URL}?token=${token}`;
     console.log("Marketplace URL:", marketplaceUrl);
-    const sellerDashboardUrl = `${config.WEBAPP_URL}/seller?token=${token}`;
+    const sellerDashboardUrl = `${config.WEBSELLER_URL}?token=${token}`;
+
+
+    console.log("Seller Dashboard URL:", sellerDashboardUrl);
 
     // --- MINI APP buttons ---
     if (role === "SELLER") {
