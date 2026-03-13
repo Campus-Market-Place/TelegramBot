@@ -1,11 +1,13 @@
 // src/handlers/seller/statistics.handler.ts
 
+import { Context } from "telegraf";
 import { bot } from "../../bot/bot";
 import { getMockStatistics } from "../../services/mockAuth.service";
 
 
 export function registerStatisticsHandler() {
-  bot.hears("📊 Statistics", async (ctx) => {
+  bot.command("stats", async (ctx: Context) => {
+  //bot.hears("", async (ctx) => {
     const telegramId = ctx.from?.id.toString()!;
     const stats = await getMockStatistics(telegramId);
     await ctx.reply(
