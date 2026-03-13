@@ -19,7 +19,7 @@ export async function startCommand(ctx: Context) {
     // --- Clear old cached commands ---
     await bot.telegram.deleteMyCommands({ scope: { type: "chat", chat_id: chatId } });
 
-   await ctx.reply("Removing keyboard...", Markup.removeKeyboard());
+   await ctx.reply("...", Markup.removeKeyboard());
 
     // --- Authenticate / get role (mock or real) ---
     const auth = await mockLogin(telegramId, username);
@@ -51,7 +51,7 @@ export async function startCommand(ctx: Context) {
           [
             
             Markup.button.webApp("🛍 Open Marketplace", marketplaceUrl),
-            Markup.button.url("📖 How to use the bot", howToUseUrl)
+            Markup.button.webApp("📖 How to use the bot", howToUseUrl)
           
           ],
          
@@ -86,7 +86,7 @@ export async function startCommand(ctx: Context) {
             Markup.button.webApp("🛍 Open Marketplace", marketplaceUrl),
             Markup.button.webApp("🛍 seller dahsboard", sellerplaceurl)
           ],
-          [Markup.button.url("📖 How to use the bot", howToUseUrl),]
+          [Markup.button.webApp("📖 How to use the bot", howToUseUrl),]
         ]).reply_markup,
       }
     );

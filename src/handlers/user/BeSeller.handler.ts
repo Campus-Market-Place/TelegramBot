@@ -22,7 +22,8 @@ export function registerBeSellerHandler() {
           caption: `<b> ${username} fill the form to </b>\n<i>Become a seller</i>\n<code>after submiting the form restart the bot by send command /start</code>`,
           parse_mode: "HTML",
           reply_markup: Markup.inlineKeyboard([
-            [Markup.button.url("📖 How to use the bot", howToUseUrl)]
+           // Markup.button.webApp("🛍fill the form ", howToUseUrl),
+            [Markup.button.webApp("📖 How to use the bot", howToUseUrl)]
           ]).reply_markup,
         }
       );
