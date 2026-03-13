@@ -21,7 +21,7 @@ export async function mockLogin(
     user: {
       id: telegramId,
       username: username,
-      role: "SELLER" // change to SELLER to test seller UI
+      role: "USER" // change to SELLER to test seller UI
     }
   };
 }

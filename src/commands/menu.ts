@@ -1,9 +1,7 @@
 import { Context, Markup } from "telegraf";
-import { loginOrSignup } from "../services/authService";
-//import { mockLogin } from "../services/mockAuth.service";
-import { config } from "../config/config";
-import { userMenuKeyboard } from "../keyboards/user.keyboard";
-import { sellerMenuKeyboard } from "../keyboards/seller.keyboard";
+import { bot } from "../bot/bot";
+import { mockLogin } from "../services/mockAuth.service";
+import { config } from "../config/config"; // to get WEBAPP_URL / WEBSELLER_URL
 
 export async function menuCommand(ctx: Context) {
 
@@ -16,29 +14,56 @@ export async function menuCommand(ctx: Context) {
     return;
   }
 
-  const auth = await loginOrSignup(telegramId, username, chatId);
-
-  //const auth = await mockLogin(telegramId, username);
-  //const auth = await mockLogin(telegramId, username);
+  // Authenticate user
+  const auth = await mockLogin(telegramId, username);
   const role = auth.user.role;
+
+  // Remove old commands
+  await bot.telegram.deleteMyCommands({
+    scope: { type: "chat", chat_id: chatId }
+  });
 
   if (role === "USER") {
 
-    const sellerFormUrl =
-      `${config.WEBREQUEST_URL}?token=${auth.token}`;
-      console.log("Seller form URL:", sellerFormUrl);
-
-    await ctx.reply(
-      "User Menu:",
-      userMenuKeyboard(sellerFormUrl)
+    await bot.telegram.setMyCommands(
+      [
+        { command: "notifications", description: "🔔 Notifications" },
+        { command: "information", description: "📦 Shop information" },
+        { command: "be_seller", description: "📝 Become a seller" },
+        { command: "support", description: "🆘 Support & FAQ" }
+      ],
+      { scope: { type: "chat", chat_id: chatId } }
     );
-  }
 
-  if (role === "SELLER") {
+    const marketplaceUrl = `${config.WEBAPP_URL}?token=${auth.token}`;
 
-    await ctx.reply(
-      "Seller Menu:",
-      sellerMenuKeyboard()
+    await ctx.reply("✅ Seller menu activated.", {
+      reply_markup: Markup.inlineKeyboard([
+        [Markup.button.webApp("🛒 Open Market place", marketplaceUrl)]
+      ]) as any
+    });
+
+
+  } else if (role === "SELLER") {
+
+    await bot.telegram.setMyCommands(
+      [
+        { command: "notifications", description: "🔔 Notifications" },
+        { command: "stats", description: "📊 Statistics" },
+        { command: "appeal", description: "📝 Ask Appeal" },
+        { command: "support", description: "🆘 Support & FAQ" }
+      ],
+      { scope: { type: "chat", chat_id: chatId } }
     );
+
+    const sellerWebUrl = `${config.WEBSELLER_URL}?token=${auth.token}`;
+
+    await ctx.reply("✅ Seller menu activated.", {
+      reply_markup: Markup.inlineKeyboard([
+        [Markup.button.webApp("🛒 Open Seller Dashboard", sellerWebUrl)],
+        [Markup.button.webApp("🛒 Open Seller Dashboard", sellerWebUrl)]
+      ]) as any
+    });
+
   }
 }
