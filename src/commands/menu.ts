@@ -48,7 +48,7 @@ export async function menuCommand(ctx: Context) {
 
     await bot.telegram.setMyCommands(
       [
-        { command: "notifications", description: "🔔 Notifications" },
+        { command: "myshop", description: "🏪 My Shop" },
         { command: "stats", description: "📊 Statistics" },
         { command: "appeal", description: "📝 Ask Appeal" },
         { command: "support", description: "🆘 Support & FAQ" }

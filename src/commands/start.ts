@@ -3,6 +3,7 @@ import { config } from "../config/config";
 import path from "path";
 import { bot } from "../bot/bot"; // import bot to set commands
 import { loginOrSignup } from "../services/authService";
+import { setAuthSession } from "../services/authSession.service";
 
 
 export async function startCommand(ctx: Context) {
@@ -23,8 +24,10 @@ export async function startCommand(ctx: Context) {
 
     // --- Authenticate / get role from backend ---
     const auth = await loginOrSignup(telegramId, username, chatId);
+    setAuthSession(chatId, auth);
     const token = auth.token;
     const role = auth.user.role;
+    const shopId = auth.user.shopid ?? null;
 
     // --- URLs for inline buttons ---
     const marketplaceUrl = `${config.WEBAPP_URL}?token=${token}`;
@@ -40,7 +43,7 @@ export async function startCommand(ctx: Context) {
 
     // --- Set menu commands and show keyboard based on role ---
     if (role === "USER") {
-      const logoPath = path.join(__dirname, "../../assets/logo1.png");
+      const logoPath = path.join(process.cwd(), "assets", "logo1.png");
       await ctx.replyWithPhoto(
         { source: logoPath },
         {
@@ -73,7 +76,13 @@ export async function startCommand(ctx: Context) {
     }
 
     if (role === "SELLER") {
-      const logoPath = path.join(__dirname, "../../assets/logo1.png");
+
+      if (!shopId) {
+        await ctx.reply("⚠️ Shop ID not found. Please contact support.");
+        return;
+      }
+
+      const logoPath = path.join(process.cwd(), "assets", "logo1.png");
       await ctx.replyWithPhoto(
         { source: logoPath },
         {
@@ -91,7 +100,7 @@ export async function startCommand(ctx: Context) {
       );
       await bot.telegram.setMyCommands(
         [
-          { command: "notifications", description: "🔔 Notifications" },
+          { command: "myshop", description: "🏪 My Shop" },
           { command: "stats", description: "📊 Statistics" },
           { command: "appeal", description: "📝 Ask Appeal" },
           { command: "support", description: "🆘 Support & FAQ" }
