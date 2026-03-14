@@ -2,7 +2,7 @@ import { Context, Markup } from "telegraf";
 import { config } from "../config/config";
 import path from "path";
 import { bot } from "../bot/bot"; // import bot to set commands
-import { mockLogin } from "../services/mockAuth.service";
+import { loginOrSignup } from "../services/authService";
 
 
 export async function startCommand(ctx: Context) {
@@ -19,20 +19,19 @@ export async function startCommand(ctx: Context) {
     // --- Clear old cached commands ---
     await bot.telegram.deleteMyCommands({ scope: { type: "chat", chat_id: chatId } });
 
-   await ctx.reply("...", Markup.removeKeyboard());
+    await ctx.reply("...", Markup.removeKeyboard());
 
-    // --- Authenticate / get role (mock or real) ---
-    const auth = await mockLogin(telegramId, username);
-    // const auth = await loginOrSignup(telegramId, username, chatId); // uncomment for real backend
+    // --- Authenticate / get role from backend ---
+    const auth = await loginOrSignup(telegramId, username, chatId);
     const token = auth.token;
     const role = auth.user.role;
 
     // --- URLs for inline buttons ---
     const marketplaceUrl = `${config.WEBAPP_URL}?token=${token}`;
     const sellerplaceurl = `${config.WEBSELLER_URL}?token=${token}`;
-    const howToUseUrl = `${config.WEBREQUEST_URL}`;
+    const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
 
-    
+
 
     // --- Remove any old persistent keyboard ---
     //await ctx.reply("Preparing your menu...", Markup.removeKeyboard());
@@ -42,22 +41,22 @@ export async function startCommand(ctx: Context) {
     // --- Set menu commands and show keyboard based on role ---
     if (role === "USER") {
       const logoPath = path.join(__dirname, "../../assets/logo1.png");
-    await ctx.replyWithPhoto(
-      { source: logoPath },
-      {
-        caption: `<b>👋 ሰላም ${username}!</b>\n<i>Welcome to Campus Gebeya</i>\n<code>Buy & sell inside AASTU</code>`,
-        parse_mode: "HTML",
-        reply_markup: Markup.inlineKeyboard([
-          [
-            
-            Markup.button.webApp("🛍 Open Marketplace", marketplaceUrl),
-            Markup.button.webApp("📖 How to use the bot", howToUseUrl)
-          
-          ],
-         
-        ]).reply_markup,
-      }
-    );
+      await ctx.replyWithPhoto(
+        { source: logoPath },
+        {
+          caption: `<b>👋 ሰላም ${username}!</b>\n<i>Welcome to Campus Gebeya</i>\n<code>Buy & sell inside AASTU</code>`,
+          parse_mode: "HTML",
+          reply_markup: Markup.inlineKeyboard([
+            [
+
+              Markup.button.webApp("🛍 Open Marketplace", marketplaceUrl),
+              Markup.button.webApp("📖 How to use the bot", howToUseUrl)
+
+            ],
+
+          ]).reply_markup,
+        }
+      );
       // ✅ Valid Telegram commands (lowercase, no spaces)
       await bot.telegram.setMyCommands(
         [
@@ -69,27 +68,27 @@ export async function startCommand(ctx: Context) {
         { scope: { type: "chat", chat_id: chatId } }
       );
 
-      const sellerFormUrl = `${config.WEBREQUEST_URL}?token=${auth.token}`;
+
       //await ctx.reply("User Menu:", userMenuKeyboard(sellerFormUrl));
     }
 
     if (role === "SELLER") {
       const logoPath = path.join(__dirname, "../../assets/logo1.png");
-    await ctx.replyWithPhoto(
-      { source: logoPath },
-      {
-        caption: `<b>👋 ሰላም ${username}!</b>\n<i>Welcome to Campus Gebeya</i>\n<code>Buy & sell inside AASTU</code>`,
-        parse_mode: "HTML",
-        reply_markup: Markup.inlineKeyboard([
-          [
-            
-            Markup.button.webApp("🛍 Open Marketplace", marketplaceUrl),
-            Markup.button.webApp("🛍 seller dahsboard", sellerplaceurl)
-          ],
-          [Markup.button.webApp("📖 How to use the bot", howToUseUrl),]
-        ]).reply_markup,
-      }
-    );
+      await ctx.replyWithPhoto(
+        { source: logoPath },
+        {
+          caption: `<b>👋 ሰላም ${username}!</b>\n<i>Welcome to Campus Gebeya</i>\n<code>Buy & sell inside AASTU</code>`,
+          parse_mode: "HTML",
+          reply_markup: Markup.inlineKeyboard([
+            [
+
+              Markup.button.webApp("🛍 Open Marketplace", marketplaceUrl),
+              Markup.button.webApp("🛍 seller dahsboard", sellerplaceurl)
+            ],
+            [Markup.button.webApp("📖 How to use the bot", howToUseUrl),]
+          ]).reply_markup,
+        }
+      );
       await bot.telegram.setMyCommands(
         [
           { command: "notifications", description: "🔔 Notifications" },
@@ -100,7 +99,7 @@ export async function startCommand(ctx: Context) {
         { scope: { type: "chat", chat_id: chatId } }
       );
 
-     // await ctx.reply("Seller Menu:", sellerMenuKeyboard());
+      // await ctx.reply("Seller Menu:", sellerMenuKeyboard());
     }
 
   } catch (error: any) {
