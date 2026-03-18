@@ -32,7 +32,7 @@ export async function loginOrSignup(
       telegram_chat_id:String(chatId)
     },
     {
-      timeout: 15000 // ✅ VERY IMPORTANT
+      timeout: 60000 // ✅ VERY IMPORTANT
     }
   );
 

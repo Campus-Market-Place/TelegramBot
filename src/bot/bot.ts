@@ -13,6 +13,8 @@ registerSellerHandlers();
 
 
 // --- Start command ---
+// Fixed: call your real startCommand
+bot.command("start", startCommand);
 
 
 // --- Launch bot ---
