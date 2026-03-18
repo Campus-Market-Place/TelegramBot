@@ -2,7 +2,8 @@ import { Context, Markup } from "telegraf";
 import { config } from "../config/config";
 import path from "path";
 import { bot } from "../bot/bot"; // import bot to set commands
-import { mockLogin } from "../services/mockAuth.service";
+import { loginOrSignup } from "../services/authService";
+//import { mockLogin } from "../services/mockAuth.service";
 
 
 export async function startCommand(ctx: Context) {
@@ -18,14 +19,16 @@ export async function startCommand(ctx: Context) {
 
     // --- Clear old cached commands ---
     await bot.telegram.deleteMyCommands({ scope: { type: "chat", chat_id: chatId } });
+    await bot.telegram.deleteMyCommands();
 
    await ctx.reply("...", Markup.removeKeyboard());
 
     // --- Authenticate / get role (mock or real) ---
-    const auth = await mockLogin(telegramId, username);
-    // const auth = await loginOrSignup(telegramId, username, chatId); // uncomment for real backend
+    //const auth = await mockLogin(telegramId, username);
+     const auth = await loginOrSignup(telegramId, username, chatId); // uncomment for real backend
     const token = auth.token;
     const role = auth.user.role;
+    console.log("AUTH RESPONSE:", auth);
 
     // --- URLs for inline buttons ---
     const marketplaceUrl = `${config.WEBAPP_URL}?token=${token}`;

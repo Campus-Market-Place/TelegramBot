@@ -11,11 +11,13 @@ export const bot = new Telegraf(config.BOT_TOKEN);
 registerUserHandlers();   // this includes registerBeSellerHandler
 registerSellerHandlers();
 
+
 // --- Start command ---
-bot.start(startCommand);
+
 
 // --- Launch bot ---
 (async () => {
   await bot.launch();
   logger.info("Bot started and commands loaded...");
+  await bot.telegram.deleteMyCommands();
 })();

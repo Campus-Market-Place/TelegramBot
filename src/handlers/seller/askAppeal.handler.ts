@@ -4,7 +4,8 @@ import { Context } from "telegraf";
 import { getMockAskAppealResponse } from "../../services/mockAuth.service";
 
 export function registerAskAppealHandler() {
-  bot.hears("📝 Ask Appeal", async (ctx: Context) => {
+  bot.command("appeal", async (ctx: Context) => {
+  //bot.hears("appeal", async (ctx: Context) => {
     const response = await getMockAskAppealResponse();
     await ctx.reply(response);
   });
