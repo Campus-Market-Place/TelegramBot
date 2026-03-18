@@ -5,10 +5,14 @@ export interface AuthResponse {
   token: string;
   user: {
     id: string;
+    telegram_id?: string;
     username: string;
-    chatId: number;
-
+    telegramChatId?: string;
+    chatId?: number;
     role: "USER" | "SELLER";
+    shopid?: string | null;
+    createdAt?: string;
+    updatedAt?: string;
   };
 }
 
