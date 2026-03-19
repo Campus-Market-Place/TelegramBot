@@ -2,15 +2,29 @@ import { Markup } from "telegraf";
 import { bot } from "../../bot/bot";
 import { config } from "../../config/config";
 import path from "path";
+import { loginOrSignup } from "../../services/authService";
+import { setAuthSession } from "../../services/authSession.service";
 
 export function registerBeSellerHandler() {
   bot.command("be_seller", async (ctx) => {
     try {
       const telegramId = ctx.from?.id.toString()!;
       const username = ctx.from?.username || "unknown";
+      const chatId = ctx.chat?.id;
+
+    if (!chatId) {
+      await ctx.reply("Chat ID not found.");
+      return;
+    }
+    const auth = await loginOrSignup(telegramId, username, chatId);
+    setAuthSession(chatId, auth);
+    const token = auth.token;
+    const role = auth.user.role;
+    console.log("AUTH RESPONSE:", auth);
+    const shopId = auth.user.shopid ?? null;
 
       // URLs for buttons
-      const howToUseUrl = `${config.WEBREQUEST_URL}`;
+      const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
 
       // Logo image path
       const logoPath = path.join(__dirname, "../../../assets/logo1.png"); // adjust relative path if needed
