@@ -23,13 +23,11 @@ export function registerBeSellerHandler() {
     console.log("AUTH RESPONSE:", auth);
     const shopId = auth.user.shopid ?? null;
 
-      // URLs for buttons
+     
       const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
 
-      // Logo image path
-      const logoPath = path.join(__dirname, "../../../assets/logo1.png"); // adjust relative path if needed
+      const logoPath = path.join(__dirname, "../../../assets/logo1.png"); 
 
-      // Send banner-like reply
       await ctx.replyWithPhoto(
         { source: logoPath },
         {
@@ -37,7 +35,8 @@ export function registerBeSellerHandler() {
           parse_mode: "HTML",
           reply_markup: Markup.inlineKeyboard([
            // Markup.button.webApp("🛍fill the form ", howToUseUrl),
-            [Markup.button.webApp("📖 How to use the bot", howToUseUrl)]
+            [Markup.button.webApp("📖 How to use the bot", howToUseUrl)],
+            [Markup.button.callback("⬅️ Back to Menu", "BACK_TO_MENU")]
           ]).reply_markup,
         }
       );

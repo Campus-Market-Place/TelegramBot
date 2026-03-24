@@ -107,6 +107,9 @@ async function showTimeFramePicker(chatId: number): Promise<void> {
         [
           Markup.button.callback("This Month", "stats_month"),
           Markup.button.callback("This Year", "stats_year")
+        ],
+        [
+          Markup.button.callback("⬅️ Back to Menu", "BACK_TO_MENU")
         ]
       ]).reply_markup
     }
@@ -133,6 +136,7 @@ export function registerStatisticsHandler() {
 
     await showTimeFramePicker(chatId);
   });
+  
 
   bot.action("stats_day", async (ctx) => {
     try {

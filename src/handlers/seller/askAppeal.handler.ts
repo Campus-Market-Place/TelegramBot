@@ -8,7 +8,7 @@ import {
 } from "../../services/appealSession.service";
 import { submitAppeal } from "../../services/appeal.service";
 import { getMockAskAppealResponse } from "../../services/mockAuth.service";
-import { Context } from "telegraf";
+import { Context, Markup } from "telegraf";
 
 async function startAppealFlow(chatId: number): Promise<string> {
   const authSession = getAuthSession(chatId);
@@ -64,11 +64,8 @@ async function replyAppealError(ctx: any, error: unknown): Promise<void> {
 }
 
 export function registerAskAppealHandler() {
+  // Single command for appeal
   bot.command("appeal", async (ctx: Context) => {
-  //bot.hears("appeal", async (ctx: Context) => {
-    const response = await getMockAskAppealResponse();
-    await ctx.reply(response);
-  bot.command("appeal", async (ctx) => {
     const chatId = ctx.chat?.id;
     if (!chatId) {
       await ctx.reply("Unable to find chat for appeal submission.");
@@ -76,15 +73,18 @@ export function registerAskAppealHandler() {
     }
 
     try {
+      const response = await getMockAskAppealResponse();
+      await ctx.reply(response);
+
       const message = await startAppealFlow(chatId);
       await ctx.reply(message);
     } catch (error) {
       clearPendingAppeal(chatId);
       await replyAppealError(ctx, error);
     }
-  }
-  );});
+  });
 
+  // Handle "Ask Appeal" button
   bot.hears("📝 Ask Appeal", async (ctx) => {
     const chatId = ctx.chat?.id;
     if (!chatId) {
@@ -101,6 +101,7 @@ export function registerAskAppealHandler() {
     }
   });
 
+  // Handle user text input for appeal reason
   bot.on("text", async (ctx, next) => {
     const chatId = ctx.chat?.id;
     const text = ctx.message.text.trim();
@@ -117,7 +118,14 @@ export function registerAskAppealHandler() {
     try {
       await submitAppealReason(chatId, text);
       clearPendingAppeal(chatId);
-      await ctx.reply("Thank you. The admin will review it.");
+
+      await ctx.reply(
+        "✅ Appeal submitted. Admin will review it.",
+        Markup.inlineKeyboard([
+          [Markup.button.callback("⬅️ Back to Menu", "BACK_TO_MENU")]
+        ])
+      );
+
     } catch (error) {
       clearPendingAppeal(chatId);
       await replyAppealError(ctx, error);

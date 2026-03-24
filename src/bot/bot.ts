@@ -4,18 +4,28 @@ import { startCommand } from "../commands/start";
 import { logger } from "../util/logger";
 import { registerSellerHandlers } from "../handlers/seller";
 import { registerUserHandlers } from "../handlers/user";
+import { registerSupportHandler } from "../handlers/common/support.handler";
 
 export const bot = new Telegraf(config.BOT_TOKEN);
 
 // --- Register handlers first ---
 registerUserHandlers();   // this includes registerBeSellerHandler
 registerSellerHandlers();
+registerSupportHandler();
 
 
 // --- Start command ---
 // Fixed: call your real startCommand
+
 bot.command("start", startCommand);
 
+// ✅ ADD THIS HERE (global action handler)
+bot.action("BACK_TO_MENU", async (ctx) => {
+  await ctx.answerCbQuery();
+
+  // Reuse your start logic
+  await startCommand(ctx as any);
+});
 
 // --- Launch bot ---
 (async () => {
