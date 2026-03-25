@@ -25,6 +25,7 @@ export function registerMyShopHandler() {
     }
 
     const sellerWebUrl = `${config.WEBSELLER_URL}?token=${authSession.token}`;
+    
 
     const message = `<i>Welcome to Campus Gebeya</i>\n<code>Buy & sell inside AASTU</code>`;
 
