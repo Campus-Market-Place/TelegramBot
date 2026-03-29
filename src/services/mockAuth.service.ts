@@ -51,10 +51,10 @@ export async function getMockSupportFAQ() {
   ];
 }
 
-export async function getMockAskAppealResponse() {
-  await new Promise((res) => setTimeout(res, 200));
-  return "Your appeal was submitted successfully. Our team will review it soon.";
-}
+// export async function getMockAskAppealResponse() {
+//   await new Promise((res) => setTimeout(res, 200));
+//   return "Your appeal was submitted successfully. Our team will review it soon.";
+// }
 
 export async function getMockUserNotifications(telegramId: string) {
   await new Promise((res) => setTimeout(res, 200));

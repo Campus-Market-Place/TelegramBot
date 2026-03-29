@@ -7,7 +7,6 @@ import {
   setPendingAppeal
 } from "../../services/appealSession.service";
 import { submitAppeal } from "../../services/appeal.service";
-import { getMockAskAppealResponse } from "../../services/mockAuth.service";
 import { Context, Markup } from "telegraf";
 
 async function startAppealFlow(chatId: number): Promise<string> {
@@ -73,9 +72,9 @@ export function registerAskAppealHandler() {
     }
 
     try {
-      const response = await getMockAskAppealResponse();
-      await ctx.reply(response);
-
+      /*    // const response = await getMockAskAppealResponse();
+         await ctx.reply(response);
+    */
       const message = await startAppealFlow(chatId);
       await ctx.reply(message);
     } catch (error) {
@@ -111,8 +110,9 @@ export function registerAskAppealHandler() {
     }
 
     if (!text || text.startsWith("/")) {
-      await ctx.reply("Please enter the reason for your appeal as a message.");
-      return;
+     // just skip this and perfoem a new thing with start with / command
+     return next();
+
     }
 
     try {

@@ -20,10 +20,4 @@ export function registerUserInformationHandler() {
       await ctx.reply("Failed to fetch information.");
     }
   });
-
-  bot.action("BACK_TO_MENU", async (ctx: Context) => {
-    await ctx.answerCbQuery(); 
-    await ctx.reply("Returning to main menu...");
-    
-  });
 }

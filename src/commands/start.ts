@@ -32,6 +32,9 @@ export async function startCommand(ctx: Context) {
 
     const marketplaceUrl = `${config.WEBAPP_URL}?token=${token}`;
     const sellerplaceurl = `${config.WEBSELLER_URL}?token=${token}`;
+
+    console.log("MARKETPLACE URL:", marketplaceUrl);
+    console.log("SELLERPLACE URL:", sellerplaceurl);
     const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
 
     const logoPath = path.join(process.cwd(), "assets", "logo1.png");

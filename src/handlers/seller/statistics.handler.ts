@@ -19,8 +19,13 @@ function formatPercent(value: number | null): string {
     return "N/A";
   }
 
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(2)}%`;
+  if (value > 0) {
+    return `Inc. by ${value.toFixed(2)}%`;
+  } else if (value < 0) {
+    return `Dec. by ${Math.abs(value).toFixed(2)}%`;
+  }
+
+  return `${value.toFixed(2)}%`;
 }
 
 function formatRatio(value: number): string {
@@ -42,12 +47,14 @@ function buildStatsMessage(payload: EngagementStatisticsResponse): string {
     `• Contact/View Ratio: ${formatRatio(metrics.contactvsviewsRatio)}`,
     `• Followers/View Ratio: ${formatRatio(metrics.followersVsViewsRatio)}`,
     "",
-    "Comparison vs Previous Period",
+    `Comparisons to Previous ${timeFrame}`,
     `• Views: ${formatPercent(comparisons.viewsPercent)}`,
     `• Contacts: ${formatPercent(comparisons.contactsPercent)}`,
     `• Social Media Clicks: ${formatPercent(comparisons.socialMediaClicksPercent)}`,
     `• New Followers: ${formatPercent(comparisons.newFollowersPercent)}`,
     `• Total Followers: ${formatPercent(comparisons.totalFollowersPercent)}`
+    ,
+    `to get more detailed statistics, click \/stats\ or the 📊 Statistics button again.`,
   ].join("\n");
 }
 
@@ -74,7 +81,7 @@ async function sendStatisticsByTimeFrame(
     timeFrame,
     authSession.token
   );
-  
+
   return buildStatsMessage(stats);
 }
 
@@ -136,7 +143,7 @@ export function registerStatisticsHandler() {
 
     await showTimeFramePicker(chatId);
   });
-  
+
 
   bot.action("stats_day", async (ctx) => {
     try {
