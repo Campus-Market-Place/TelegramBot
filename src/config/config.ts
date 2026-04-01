@@ -9,5 +9,5 @@ export const config = {
   WEBREQUEST_URL: process.env.WEBREQUEST_URL as string,
   WEBSELLER_URL: process.env.WEBSELLER_URL as string,
   WEBHOOK_URL: process.env.WEBHOOK_URL as string,
-  How_TO_USE_WEBHOOK: process.env.How_TO_USE_WEBHOOK as string,
+  HOW_TO_USE_WEBHOOK: process.env.HOW_TO_USE_WEBHOOK as string,
 };
