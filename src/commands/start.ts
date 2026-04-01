@@ -35,20 +35,21 @@ export async function startCommand(ctx: Context) {
     const marketplaceUrl = `${config.WEBAPP_URL}?token=${token}`;
     const sellerplaceurl = `${config.WEBSELLER_URL}?token=${token}`;
     const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
+    const How_TO_USE_WEBHOOK = `${config.How_TO_USE_WEBHOOK}?token=${token}`;
 
     const logoPath = path.join(process.cwd(), "assets", "logo2.png");
 
-    // ================= USER =================
+    // ================= USER =================  
     if (role === "USER") {
       await ctx.replyWithPhoto(
         { source: logoPath },
         {
-          caption: `<b>👋 ሰላም ${username}!</b>\n<i>Welcome to Campus Gebeya</i>\n<code>Buy & sell inside AASTU</code>`,
+          caption: `<b>👋 ${username}! ሰላም</b>\n<i>Welcome to Campus Gebeya</i>\n<code>Buy & sell inside AASTU</code>`,
           parse_mode: "HTML",
           reply_markup: Markup.inlineKeyboard([
             [
               Markup.button.webApp("🛍 Open Marketplace", marketplaceUrl),
-              Markup.button.webApp("📖 How to use", howToUseUrl),
+              Markup.button.webApp("📖 How to use", How_TO_USE_WEBHOOK),
             ],
             [
               Markup.button.callback("📞 Contact Us", "CONTACT_US"), // ✅ NEW
@@ -86,7 +87,7 @@ export async function startCommand(ctx: Context) {
               Markup.button.webApp("📊 Seller Dashboard", sellerplaceurl),
             ],
             [
-              Markup.button.webApp("📖 How to use", howToUseUrl),
+              Markup.button.webApp("📖 How to use", How_TO_USE_WEBHOOK),
               Markup.button.callback("📞 Contact Us", "CONTACT_US"),
             ],
             
