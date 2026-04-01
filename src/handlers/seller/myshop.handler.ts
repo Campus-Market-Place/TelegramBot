@@ -16,7 +16,7 @@ export function registerMyShopHandler() {
       return;
     }
 
-    const logoPath = path.join(process.cwd(), "assets", "logo1.png");
+    const logoPath = path.join(process.cwd(), "assets", "logo4.png");
 
     const authSession = getAuthSession(chatId);
     if (!authSession) {

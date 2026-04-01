@@ -26,7 +26,7 @@ export function registerBeSellerHandler() {
      
       const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
 
-      const logoPath = path.join(__dirname, "../../../assets/logo1.png"); 
+      const logoPath = path.join(__dirname, "../../../assets/logo4.png"); 
 
       await ctx.replyWithPhoto(
         { source: logoPath },

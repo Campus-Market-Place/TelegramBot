@@ -4,6 +4,7 @@ import path from "path";
 import { bot } from "../bot/bot";
 import { loginOrSignup } from "../services/authService";
 import { setAuthSession } from "../services/authSession.service";
+//import { mockLogin } from "../services/mockAuth.service";
 
 export async function startCommand(ctx: Context) {
   try {
@@ -24,6 +25,7 @@ export async function startCommand(ctx: Context) {
     await ctx.reply("...", Markup.removeKeyboard());
 
     const auth = await loginOrSignup(telegramId, username, chatId);
+    //const auth = await mockLogin(telegramId, username);
     setAuthSession(chatId, auth);
 
     const token = auth.token;
@@ -32,12 +34,9 @@ export async function startCommand(ctx: Context) {
 
     const marketplaceUrl = `${config.WEBAPP_URL}?token=${token}`;
     const sellerplaceurl = `${config.WEBSELLER_URL}?token=${token}`;
-
-    console.log("MARKETPLACE URL:", marketplaceUrl);
-    console.log("SELLERPLACE URL:", sellerplaceurl);
     const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
 
-    const logoPath = path.join(process.cwd(), "assets", "logo1.png");
+    const logoPath = path.join(process.cwd(), "assets", "logo2.png");
 
     // ================= USER =================
     if (role === "USER") {
@@ -88,10 +87,9 @@ export async function startCommand(ctx: Context) {
             ],
             [
               Markup.button.webApp("📖 How to use", howToUseUrl),
+              Markup.button.callback("📞 Contact Us", "CONTACT_US"),
             ],
-            [
-              Markup.button.callback("📞 Contact Us", "CONTACT_US"), // ✅ NEW
-            ],
+            
           ]).reply_markup,
         }
       );
