@@ -16,6 +16,7 @@ export function registerBeSellerHandler() {
       await ctx.reply("Chat ID not found.");
       return;
     }
+    
     const auth = await loginOrSignup(telegramId, username, chatId);
     setAuthSession(chatId, auth);
     const token = auth.token;
