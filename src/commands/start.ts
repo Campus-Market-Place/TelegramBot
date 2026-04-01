@@ -34,8 +34,19 @@ export async function startCommand(ctx: Context) {
 
     const marketplaceUrl = `${config.WEBAPP_URL}?token=${token}`;
     const sellerplaceurl = `${config.WEBSELLER_URL}?token=${token}`;
-    const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
+    //const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
     const How_TO_USE_WEBHOOK = `${config.How_TO_USE_WEBHOOK}?token=${token}`;
+
+
+    // 🔹 Add debug logs
+console.log("==== START DEBUG ====");
+console.log("Token:", token);
+console.log("WEBAPP_URL:", config.WEBAPP_URL);
+console.log("Marketplace URL:", marketplaceUrl);
+console.log("WEBSELLER_URL:", config.WEBSELLER_URL);
+console.log("Seller URL:", sellerplaceurl);
+console.log("HOW_TO_USE_WEBHOOK:", How_TO_USE_WEBHOOK);
+console.log("=====================");
 
     const logoPath = path.join(process.cwd(), "assets", "logo2.png");
 
