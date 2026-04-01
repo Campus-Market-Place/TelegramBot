@@ -24,6 +24,26 @@ export async function loginOrSignup(
 
   console.log("Calling backend login...");
 
+  console.log("Calling backend login...");
+  try {
+    const response = await axios.post(
+      `${config.BACKEND_URL}/auth/login`,
+      {
+        telegram_id: telegramId,
+        telegram_username: username,
+        telegram_chat_id: String(chatId)
+      },
+      {
+        timeout: 60000 // ✅ VERY IMPORTANT
+      }
+    );
+    console.log("Backend responded:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Login failed:", error);
+    throw error;
+  }
+
   const response = await axios.post(
     `${config.BACKEND_URL}/auth/login`,
     {
@@ -41,3 +61,4 @@ export async function loginOrSignup(
 
   return response.data;
 }
+

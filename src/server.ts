@@ -38,3 +38,14 @@ app.listen(PORT, async () => {
 
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
+
+app.post("/telegram/webhook", async (req, res) => {
+  console.log("Incoming update:", req.body);
+  try {
+    await bot.handleUpdate(req.body);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error("Webhook error:", error);
+    res.sendStatus(500);
+  }
+});
