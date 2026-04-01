@@ -30,8 +30,8 @@ bot.action("BACK_TO_MENU", async (ctx) => {
 });
 
 // --- Launch bot ---
-(async () => {
+/*(async () => {
   await bot.launch();
   logger.info("Bot started and commands loaded...");
 await bot.telegram.deleteMyCommands();
-})();
+})();*/
