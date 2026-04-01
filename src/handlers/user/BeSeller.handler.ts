@@ -23,20 +23,20 @@ export function registerBeSellerHandler() {
     const role = auth.user.role;
     console.log("AUTH RESPONSE:", auth);
     const shopId = auth.user.shopid ?? null;
-
+ 
      
       const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
 
-      const logoPath = path.join(__dirname, "../../../assets/logo1.png"); 
+      const logoPath = path.join(__dirname, "../../../assets/logo4.png"); 
 
       await ctx.replyWithPhoto(
         { source: logoPath },
         {
-          caption: `<b> ${username} fill the form to </b>\n<i>Become a seller</i>\n<code>after submiting the form restart the bot by send command /start</code>`,
+          caption: `<b>${username} fill the form to </b>\n<i>Become a seller</i>\n<code>after submiting the form restart the bot by send command /start</code>`,
           parse_mode: "HTML",
           reply_markup: Markup.inlineKeyboard([
            // Markup.button.webApp("🛍fill the form ", howToUseUrl),
-            [Markup.button.webApp("📖 How to use the bot", howToUseUrl)],
+            [Markup.button.webApp("Fill in seller form", howToUseUrl)],
             [Markup.button.callback("⬅️ Back to Menu", "BACK_TO_MENU")]
           ]).reply_markup,
         }

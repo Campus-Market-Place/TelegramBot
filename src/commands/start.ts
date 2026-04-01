@@ -1,11 +1,10 @@
 import { Context, Markup } from "telegraf";
 import { config } from "../config/config";
 import path from "path";
-import { bot } from "../bot/bot"; // import bot to set commands
+import { bot } from "../bot/bot";
 import { loginOrSignup } from "../services/authService";
 import { setAuthSession } from "../services/authSession.service";
 //import { mockLogin } from "../services/mockAuth.service";
-
 
 export async function startCommand(ctx: Context) {
   try {
@@ -18,110 +17,96 @@ export async function startCommand(ctx: Context) {
       return;
     }
 
-    // --- Clear old cached commands ---
-    await bot.telegram.deleteMyCommands({ scope: { type: "chat", chat_id: chatId } });
-    await bot.telegram.deleteMyCommands();
+    // ✅ Clear old commands (only per chat, REMOVE global delete)
+    await bot.telegram.deleteMyCommands({
+      scope: { type: "chat", chat_id: chatId },
+    });
 
     await ctx.reply("...", Markup.removeKeyboard());
 
-    // --- Authenticate / get role (mock or real) ---
-    //const auth = await mockLogin(telegramId, username);
-     //const auth = await loginOrSignup(telegramId, username, chatId); // uncomment for real backend
-    // --- Authenticate / get role from backend ---
     const auth = await loginOrSignup(telegramId, username, chatId);
+    //const auth = await mockLogin(telegramId, username);
     setAuthSession(chatId, auth);
+
     const token = auth.token;
     const role = auth.user.role;
-    console.log("AUTH RESPONSE:", auth);
     const shopId = auth.user.shopid ?? null;
 
-    // --- URLs for inline buttons ---
     const marketplaceUrl = `${config.WEBAPP_URL}?token=${token}`;
     const sellerplaceurl = `${config.WEBSELLER_URL}?token=${token}`;
-
-    console.log("MARKETPLACE URL:", marketplaceUrl);
-    console.log("SELLERPLACE URL:", sellerplaceurl);
     const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
+    const How_TO_USE_WEBHOOK = `${config.How_TO_USE_WEBHOOK}?token=${token}`;
 
+    const logoPath = path.join(process.cwd(), "assets", "logo2.png");
 
-
-    // --- Remove any old persistent keyboard ---
-    //await ctx.reply("Preparing your menu...", Markup.removeKeyboard());
-
-
-
-    // --- Set menu commands and show keyboard based on role ---
+    // ================= USER =================  
     if (role === "USER") {
-      const logoPath = path.join(process.cwd(), "assets", "logo1.png");
       await ctx.replyWithPhoto(
         { source: logoPath },
         {
-          caption: `<b>👋 ሰላም ${username}!</b>\n<i>Welcome to Campus Gebeya</i>\n<code>Buy & sell inside AASTU</code>`,
+          caption: `<b>👋 ${username}! ሰላም</b>\n<i>Welcome to Campus Gebeya</i>\n<code>Buy & sell inside AASTU</code>`,
           parse_mode: "HTML",
           reply_markup: Markup.inlineKeyboard([
             [
-
               Markup.button.webApp("🛍 Open Marketplace", marketplaceUrl),
-              Markup.button.webApp("📖 How to use the bot", howToUseUrl)
-
+              Markup.button.webApp("📖 How to use", How_TO_USE_WEBHOOK),
             ],
-
+            [
+              Markup.button.callback("📞 Contact Us", "CONTACT_US"), // ✅ NEW
+            ],
           ]).reply_markup,
         }
       );
-      // ✅ Valid Telegram commands (lowercase, no spaces)
+
       await bot.telegram.setMyCommands(
         [
           { command: "notifications", description: "🔔 Notifications" },
-          { command: "information", description: "📦 Get information about the shop" },
-          { command: "be_seller", description: "Fill form to become seller" },
-          { command: "support", description: "🆘 Support & FAQ" }
+          { command: "information", description: "📦 Shop info" },
+          { command: "be_seller", description: "Become a seller" },
+          { command: "support", description: "🆘 Support" },
         ],
         { scope: { type: "chat", chat_id: chatId } }
       );
-
-
-      //await ctx.reply("User Menu:", userMenuKeyboard(sellerFormUrl));
     }
 
+    // ================= SELLER =================
     if (role === "SELLER") {
-
       if (!shopId) {
-        await ctx.reply("⚠️ Shop ID not found. Please contact support.");
+        await ctx.reply("⚠️ Shop ID not found.");
         return;
       }
 
-      const logoPath = path.join(process.cwd(), "assets", "logo1.png");
       await ctx.replyWithPhoto(
         { source: logoPath },
         {
-          caption: `<b>👋 ሰላም ${username}!</b>\n<i>Welcome to Campus Gebeya</i>\n<code>Buy & sell inside AASTU</code>`,
+          caption: `<b>👋 ሰላም ${username}!</b>\n<i>Welcome to Campus Gebeya</i>\n<code>Manage your shop</code>`,
           parse_mode: "HTML",
           reply_markup: Markup.inlineKeyboard([
             [
-
-              Markup.button.webApp("🛍 Open Marketplace", marketplaceUrl),
-              Markup.button.webApp("🛍 seller dahsboard", sellerplaceurl)
+              Markup.button.webApp("🛍 Marketplace", marketplaceUrl),
+              Markup.button.webApp("📊 Seller Dashboard", sellerplaceurl),
             ],
-            [Markup.button.webApp("📖 How to use the bot", howToUseUrl),]
+            [
+              Markup.button.webApp("📖 How to use", How_TO_USE_WEBHOOK),
+              Markup.button.callback("📞 Contact Us", "CONTACT_US"),
+            ],
+            
           ]).reply_markup,
         }
       );
+
       await bot.telegram.setMyCommands(
         [
           { command: "myshop", description: "🏪 My Shop" },
-          { command: "stats", description: "📊 Statistics" },
-          { command: "appeal", description: "📝 Ask Appeal" },
-          { command: "support", description: "🆘 Support & FAQ" }
+          { command: "stats", description: "📊 Stats" },
+          { command: "appeal", description: "📝 Appeal" },
+          { command: "support", description: "🆘 Support" },
         ],
         { scope: { type: "chat", chat_id: chatId } }
       );
-
-      // await ctx.reply("Seller Menu:", sellerMenuKeyboard());
     }
-
   } catch (error: any) {
     console.error("START ERROR:", error?.message);
-    await ctx.reply("⚠️ Server is waking up. Please press /start again.");
+    await ctx.reply("⚠️ Server is waking up. Please try again.");
   }
 }
