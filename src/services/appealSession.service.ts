@@ -11,3 +11,4 @@ export function hasPendingAppeal(chatId: number): boolean {
 export function clearPendingAppeal(chatId: number): void {
   pendingAppeals.delete(chatId);
 }
+
