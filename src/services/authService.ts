@@ -48,11 +48,7 @@ export async function updateUserState(
   context: Record<string, unknown>,
   token: string
 ): Promise<AuthResponse["user"]> {
-  const endpoints = [
-    `${config.BACKEND_URL}/auth/users/${userId}/state`,
-    `${config.BACKEND_URL}/auth/state/${userId}`,
-    `${config.BACKEND_URL}/auth/state`
-  ];
+  const endpoint= `${config.BACKEND_URL}/auth/users/${userId}/state`;
 
   const payload = {
     userId,
@@ -62,12 +58,11 @@ export async function updateUserState(
 
   let lastError: unknown;
 
-  for (const endpoint of endpoints) {
-    try {
-      const response = await axios.patch(endpoint, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
+  try {
+    const response = await axios.patch(endpoint, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
         timeout: 20000
       });
 
@@ -75,8 +70,10 @@ export async function updateUserState(
     } catch (error) {
       lastError = error;
     }
+
+    throw lastError;
   }
 
-  throw lastError;
-}
+  
+
 
