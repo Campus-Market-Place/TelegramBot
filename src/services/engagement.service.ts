@@ -1,5 +1,6 @@
 import axios from "axios";
 import { config } from "../config/config";
+import { withBackendAutoRetry } from "../util/wakeBackend";
 
 export type StatisticsTimeFrame = "day" | "week" | "month" | "year";
 
@@ -41,12 +42,16 @@ export async function getStatistics(
   timeFrame: StatisticsTimeFrame,
   token?: string
 ): Promise<EngagementStatisticsResponse> {
-  const response = await axios.get(
-    `${config.BACKEND_URL}/api/engagement/${shopId}/statistics`,
+  const response = await withBackendAutoRetry(
+    () =>
+      axios.get(`${config.BACKEND_URL}/api/engagement/${shopId}/statistics`, {
+        params: { timeFrame },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        timeout: 15000
+      }),
     {
-      params: { timeFrame },
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      timeout: 15000
+      maxAttempts: 3,
+      delayMs: 1500
     }
   );
 

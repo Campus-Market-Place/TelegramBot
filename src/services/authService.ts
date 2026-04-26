@@ -1,5 +1,6 @@
 import axios from "axios";
 import { config } from "../config/config";
+import { withBackendAutoRetry } from "../util/wakeBackend";
 
 export type Role = "USER" | "SELLER";
 
@@ -25,17 +26,26 @@ export interface AuthResponse {
 export async function loginOrSignup(
   telegramId: string,
   username: string,
-  chatId: number
+  chatId: number,
+  onRetryStart?: () => Promise<void> | void
 ): Promise<AuthResponse> {
-  const response = await axios.post(
-    `${config.BACKEND_URL}/auth/login`,
+  const response = await withBackendAutoRetry(
+    () =>
+      axios.post(
+        `${config.BACKEND_URL}/auth/login`,
+        {
+          telegram_id: telegramId,
+          telegram_username: username,
+          telegram_chat_id: String(chatId)
+        },
+        {
+          timeout: 60000
+        }
+      ),
     {
-      telegram_id: telegramId,
-      telegram_username: username,
-      telegram_chat_id: String(chatId)
-    },
-    {
-      timeout: 60000
+      maxAttempts: 4,
+      delayMs: 2000,
+      onRetryStart
     }
   );
 
@@ -48,7 +58,7 @@ export async function updateUserState(
   context: Record<string, unknown>,
   token: string
 ): Promise<AuthResponse["user"]> {
-  const endpoint= `${config.BACKEND_URL}/auth/users/${userId}/state`;
+  const endpoint = `${config.BACKEND_URL}/auth/users/${userId}/state`;
 
   const payload = {
     userId,
@@ -56,23 +66,22 @@ export async function updateUserState(
     context
   };
 
-  let lastError: unknown;
-
-  try {
-    const response = await axios.patch(endpoint, payload, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
+  const response = await withBackendAutoRetry(
+    () =>
+      axios.patch(endpoint, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
         timeout: 20000
-      });
-
-      return response.data?.user ?? response.data?.data ?? response.data;
-    } catch (error) {
-      lastError = error;
+      }),
+    {
+      maxAttempts: 3,
+      delayMs: 1500
     }
+  );
 
-    throw lastError;
-  }
+  return response.data?.user ?? response.data?.data ?? response.data;
+}
 
   
 

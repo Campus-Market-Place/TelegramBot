@@ -23,7 +23,14 @@ bot.use(async (ctx, next) => {
   }
 
   try {
-    const auth = await loginOrSignup(String(telegramId), username || "unknown", chatId);
+    const auth = await loginOrSignup(
+      String(telegramId),
+      username || "unknown",
+      chatId,
+      async () => {
+        await ctx.reply("⏳ Processing your request...");
+      }
+    );
     botCtx.auth = auth;
     setContextState(botCtx, auth.user.state ?? "IDLE", auth.user.context ?? {});
   } catch {
