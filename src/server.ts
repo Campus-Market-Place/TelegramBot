@@ -13,15 +13,15 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.post("/telegram/webhook", async (req: Request, res: Response) => {
-  try {
-    await bot.handleUpdate(req.body);
-    res.sendStatus(200);
-  } catch (error) {
-    logger.error("Webhook error");
-    res.sendStatus(500);
-  }
-});
+// app.post("/telegram/webhook", async (req: Request, res: Response) => {
+//   try {
+//     await bot.handleUpdate(req.body);
+//     res.sendStatus(200);
+//   } catch (error) {
+//     logger.error("Webhook error");
+//     res.sendStatus(500);
+//   }
+// });
 
 app.get("/", (_req: Request, res: Response) => {
   res.send("Bot running");
@@ -37,8 +37,8 @@ app.listen(PORT, async () => {
   logger.info("Webhook set successfully");
 });
 
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
+//process.once("SIGINT", () => bot.stop("SIGINT"));
+//process.once("SIGTERM", () => bot.stop("SIGTERM"));
 
 app.post("/telegram/webhook", async (req: Request, res: Response) => {
   console.log("Incoming update:", req.body);
