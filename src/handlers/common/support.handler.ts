@@ -1,29 +1,55 @@
 import { bot } from "../../bot/bot";
-import { Context, Markup } from "telegraf";
+import { Markup } from "telegraf";
 import { getMockSupportFAQ } from "../../services/mockAuth.service";
-import { getAuthSession } from "../../services/authSession.service";
+import { BotContext, setContextState } from "../../types/botContext";
+import { updateUserState } from "../../services/authService";
+
+export async function sendSupportInfo(ctx: BotContext): Promise<void> {
+  const auth = ctx.auth;
+  if (!auth) {
+    await ctx.reply("⚠️ I couldn’t load your account. Please try again.");
+    return;
+  }
+
+  const role = auth.user?.role;
+  let faq: string[] = [];
+
+  if (role === "SELLER") {
+    faq = await getMockSupportFAQ();
+  } else {
+    faq = await getMockSupportFAQ();
+  }
+
+  await ctx.reply(
+    "Support & FAQ:\n\n" + faq.join("\n\n"),
+    Markup.inlineKeyboard([[Markup.button.callback("⬅️ Back to Menu", "BACK_TO_MENU")]])
+  );
+}
 
 export function registerSupportHandler() {
-  bot.command("support", async (ctx: Context) => {
-    const chatId = ctx.chat?.id;
-    if (!chatId) return;
+  bot.command("support", async (ctx) => {
+    const botCtx = ctx as unknown as BotContext;
+    const auth = botCtx.auth;
 
-    const session = getAuthSession(chatId);
-    const role = session?.user?.role;
-
-    let faq: string[] = [];
-
-    if (role === "SELLER") {
-      faq = await getMockSupportFAQ(); // seller FAQ
-    } else {
-      faq = await getMockSupportFAQ(); // user FAQ (replace later)
+    if (!auth) {
+      await botCtx.reply("⚠️ I couldn’t load your account. Please try again.");
+      return;
     }
 
-    await ctx.reply(
-      "Support & FAQ:\n\n" + faq.join("\n\n"),
-      Markup.inlineKeyboard([
-        [Markup.button.callback("⬅️ Back to Menu", "BACK_TO_MENU")]
-      ])
-    );
+    try {
+      const updatedUser = await updateUserState(auth.user.id, "SUPPORT_CONTACT", {}, auth.token);
+      setContextState(botCtx, updatedUser.state ?? "SUPPORT_CONTACT", updatedUser.context ?? {});
+      botCtx.auth = {
+        ...auth,
+        user: {
+          ...auth.user,
+          ...updatedUser
+        }
+      };
+    } catch {
+      setContextState(botCtx, "SUPPORT_CONTACT", {});
+    }
+
+    await sendSupportInfo(botCtx);
   });
 }

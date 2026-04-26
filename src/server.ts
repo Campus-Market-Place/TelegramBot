@@ -2,17 +2,18 @@
 
 //https://client-side-self.vercel.app/
 import express from "express";
+import { Request, Response } from "express";
 import { bot } from "./bot/bot";
 import { logger } from "./util/logger";
 import { config } from "./config/config";
-import { Update } from "telegraf/typings/core/types/typegram";
+// import { Update } from "telegraf/typings/core/types/typegram";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.post("/telegram/webhook", async (req: { body: Update; }, res: { sendStatus: (arg0: number) => void; }) => {
+app.post("/telegram/webhook", async (req: Request, res: Response) => {
   try {
     await bot.handleUpdate(req.body);
     res.sendStatus(200);
@@ -22,7 +23,7 @@ app.post("/telegram/webhook", async (req: { body: Update; }, res: { sendStatus: 
   }
 });
 
-app.get("/", (_req: any, res: { send: (arg0: string) => void; }) => {
+app.get("/", (_req: Request, res: Response) => {
   res.send("Bot running");
 });
 
@@ -39,7 +40,7 @@ app.listen(PORT, async () => {
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
 
-app.post("/telegram/webhook", async (req, res) => {
+app.post("/telegram/webhook", async (req: Request, res: Response) => {
   console.log("Incoming update:", req.body);
   try {
     await bot.handleUpdate(req.body);

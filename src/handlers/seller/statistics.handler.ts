@@ -5,7 +5,8 @@ import {
   StatisticsTimeFrame,
   EngagementStatisticsResponse
 } from "../../services/engagement.service";
-import { getAuthSession } from "../../services/authSession.service";
+import { updateUserState } from "../../services/authService";
+import { BotContext, setContextState } from "../../types/botContext";
 
 const timeFrameLabels: Record<StatisticsTimeFrame, string> = {
   day: "Today",
@@ -21,7 +22,9 @@ function formatPercent(value: number | null): string {
 
   if (value > 0) {
     return `Inc. by ${value.toFixed(2)}%`;
-  } else if (value < 0) {
+  }
+
+  if (value < 0) {
     return `Dec. by ${Math.abs(value).toFixed(2)}%`;
   }
 
@@ -52,136 +55,150 @@ function buildStatsMessage(payload: EngagementStatisticsResponse): string {
     `• Contacts: ${formatPercent(comparisons.contactsPercent)}`,
     `• Social Media Clicks: ${formatPercent(comparisons.socialMediaClicksPercent)}`,
     `• New Followers: ${formatPercent(comparisons.newFollowersPercent)}`,
-    `• Total Followers: ${formatPercent(comparisons.totalFollowersPercent)}`
-    ,
-    `to get more detailed statistics, click \/stats\ or the 📊 Statistics button again.`,
+    `• Total Followers: ${formatPercent(comparisons.totalFollowersPercent)}`,
+    "",
+    "To get more detailed statistics, click /stats or the 📊 Statistics button again."
   ].join("\n");
 }
 
-async function sendStatisticsByTimeFrame(
-  chatId: number,
-  timeFrame: StatisticsTimeFrame
-): Promise<string> {
-  const authSession = getAuthSession(chatId);
-
-  if (!authSession) {
-    throw new Error("AUTH_SESSION_MISSING");
+function getAuthOrReply(ctx: BotContext) {
+  const auth = ctx.auth;
+  if (!auth) {
+    ctx.reply("⚠️ I couldn’t load your account. Please try again.");
+    return null;
   }
 
-  if (authSession.user.role !== "SELLER") {
-    throw new Error("SELLER_ONLY");
-  }
-
-  if (!authSession.user.shopid) {
-    throw new Error("SHOP_ID_MISSING");
-  }
-
-  const stats = await getStatistics(
-    authSession.user.shopid,
-    timeFrame,
-    authSession.token
-  );
-
-  return buildStatsMessage(stats);
+  return auth;
 }
 
-async function replyStatsError(ctx: Parameters<typeof bot.action>[1] extends never ? never : any, error: unknown): Promise<void> {
-  if (error instanceof Error) {
-    if (error.message === "AUTH_SESSION_MISSING") {
-      await ctx.reply("Please send /start first so I can load your seller account.");
-      return;
-    }
+export async function showTimeFramePicker(ctx: BotContext): Promise<void> {
+  const auth = getAuthOrReply(ctx);
+  const chatId = ctx.chat?.id;
 
-    if (error.message === "SELLER_ONLY" || error.message === "SHOP_ID_MISSING") {
-      await ctx.reply("This statistics view is only available for seller accounts with a shop.");
-      return;
-    }
+  if (!auth || !chatId) {
+    return;
   }
 
-  await ctx.reply("Could not fetch statistics right now.");
+  await ctx.reply("Select a time frame to view shop statistics:", {
+    reply_markup: Markup.inlineKeyboard([
+      [
+        Markup.button.callback("Today", "stats_day"),
+        Markup.button.callback("This Week", "stats_week")
+      ],
+      [
+        Markup.button.callback("This Month", "stats_month"),
+        Markup.button.callback("This Year", "stats_year")
+      ],
+      [Markup.button.callback("⬅️ Back to Menu", "BACK_TO_MENU")]
+    ]).reply_markup
+  });
 }
 
-async function showTimeFramePicker(chatId: number): Promise<void> {
-  await bot.telegram.sendMessage(
-    chatId,
-    "Select a time frame to view shop statistics:",
-    {
-      reply_markup: Markup.inlineKeyboard([
-        [
-          Markup.button.callback("Today", "stats_day"),
-          Markup.button.callback("This Week", "stats_week")
-        ],
-        [
-          Markup.button.callback("This Month", "stats_month"),
-          Markup.button.callback("This Year", "stats_year")
-        ],
-        [
-          Markup.button.callback("⬅️ Back to Menu", "BACK_TO_MENU")
-        ]
-      ]).reply_markup
+async function setState(ctx: BotContext, state: string, nextContext: Record<string, unknown>) {
+  const auth = ctx.auth;
+  if (!auth) {
+    return;
+  }
+
+  const updatedUser = await updateUserState(auth.user.id, state, nextContext, auth.token);
+  setContextState(ctx, updatedUser.state ?? state, updatedUser.context ?? nextContext);
+  ctx.auth = {
+    ...auth,
+    user: {
+      ...auth.user,
+      ...updatedUser
     }
-  );
+  };
+}
+
+async function sendStatisticsByTimeFrame(ctx: BotContext, timeFrame: StatisticsTimeFrame): Promise<void> {
+  const auth = getAuthOrReply(ctx);
+  if (!auth) {
+    return;
+  }
+
+  if (auth.user.role !== "SELLER" || !auth.user.shopid) {
+    await ctx.reply("This statistics view is only available for seller accounts with a shop.");
+    return;
+  }
+
+  const stats = await getStatistics(auth.user.shopid, timeFrame, auth.token);
+  const message = buildStatsMessage(stats);
+
+  await setState(ctx, "STAT_CHECK", { timeFrame });
+  await ctx.reply(message);
 }
 
 export function registerStatisticsHandler() {
   bot.command("stats", async (ctx) => {
-    const chatId = ctx.chat?.id;
-    if (!chatId) {
-      await ctx.reply("Unable to find chat for statistics.");
+    const botCtx = ctx as unknown as BotContext;
+    const auth = getAuthOrReply(botCtx);
+
+    if (!auth) {
       return;
     }
 
-    await showTimeFramePicker(chatId);
+    try {
+      await setState(botCtx, "TIMEFRAME_SELECTION", {});
+      await showTimeFramePicker(botCtx);
+    } catch {
+      await botCtx.reply("Could not fetch statistics right now.");
+    }
   });
 
   bot.hears("📊 Statistics", async (ctx) => {
-    const chatId = ctx.chat?.id;
-    if (!chatId) {
-      await ctx.reply("Unable to find chat for statistics.");
+    const botCtx = ctx as unknown as BotContext;
+    const auth = getAuthOrReply(botCtx);
+
+    if (!auth) {
       return;
     }
 
-    await showTimeFramePicker(chatId);
+    try {
+      await setState(botCtx, "TIMEFRAME_SELECTION", {});
+      await showTimeFramePicker(botCtx);
+    } catch {
+      await botCtx.reply("Could not fetch statistics right now.");
+    }
   });
 
-
   bot.action("stats_day", async (ctx) => {
+    const botCtx = ctx as unknown as BotContext;
+    await ctx.answerCbQuery();
     try {
-      await ctx.answerCbQuery();
-      const message = await sendStatisticsByTimeFrame(ctx.chat!.id, "day");
-      await ctx.reply(message);
-    } catch (error) {
-      await replyStatsError(ctx, error);
+      await sendStatisticsByTimeFrame(botCtx, "day");
+    } catch {
+      await botCtx.reply("Could not fetch statistics right now.");
     }
   });
 
   bot.action("stats_week", async (ctx) => {
+    const botCtx = ctx as unknown as BotContext;
+    await ctx.answerCbQuery();
     try {
-      await ctx.answerCbQuery();
-      const message = await sendStatisticsByTimeFrame(ctx.chat!.id, "week");
-      await ctx.reply(message);
-    } catch (error) {
-      await replyStatsError(ctx, error);
+      await sendStatisticsByTimeFrame(botCtx, "week");
+    } catch {
+      await botCtx.reply("Could not fetch statistics right now.");
     }
   });
 
   bot.action("stats_month", async (ctx) => {
+    const botCtx = ctx as unknown as BotContext;
+    await ctx.answerCbQuery();
     try {
-      await ctx.answerCbQuery();
-      const message = await sendStatisticsByTimeFrame(ctx.chat!.id, "month");
-      await ctx.reply(message);
-    } catch (error) {
-      await replyStatsError(ctx, error);
+      await sendStatisticsByTimeFrame(botCtx, "month");
+    } catch {
+      await botCtx.reply("Could not fetch statistics right now.");
     }
   });
 
   bot.action("stats_year", async (ctx) => {
+    const botCtx = ctx as unknown as BotContext;
+    await ctx.answerCbQuery();
     try {
-      await ctx.answerCbQuery();
-      const message = await sendStatisticsByTimeFrame(ctx.chat!.id, "year");
-      await ctx.reply(message);
-    } catch (error) {
-      await replyStatsError(ctx, error);
+      await sendStatisticsByTimeFrame(botCtx, "year");
+    } catch {
+      await botCtx.reply("Could not fetch statistics right now.");
     }
   });
 }

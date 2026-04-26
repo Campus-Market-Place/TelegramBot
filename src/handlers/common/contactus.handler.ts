@@ -2,10 +2,11 @@ import path from "path";
 import { existsSync } from "fs";
 import { bot } from "../../bot/bot";
 import { Context, Markup } from "telegraf";
-import { getAuthSession } from "../../services/authSession.service";
+import { BotContext } from "../../types/botContext";
 
 export function registerContactHandler() {
     bot.action("CONTACT_US", async (ctx: Context) => {
+  const botCtx = ctx as BotContext;
       const chatId = ctx.chat?.id;
   
       if (!chatId) {
@@ -13,9 +14,9 @@ export function registerContactHandler() {
         return;
       }
   
-      const authSession = getAuthSession(chatId);
-      if (!authSession) {
-        await ctx.reply("Please send /start first.");
+      const auth = botCtx.auth;
+      if (!auth) {
+        await ctx.reply("⚠️ I couldn’t load your account. Please try again.");
         return;
       }
   

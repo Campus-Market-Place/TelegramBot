@@ -5,26 +5,27 @@ import { existsSync } from "fs";
 import { bot } from "../../bot/bot";
 import { Context, Markup } from "telegraf";
 import { config } from "../../config/config";
-import { getAuthSession } from "../../services/authSession.service";
+import { BotContext } from "../../types/botContext";
 
 export function registerMyShopHandler() {
 
   const sendMyShop = async (ctx: Context) => {
+    const botCtx = ctx as BotContext;
     const chatId = ctx.chat?.id;
     if (!chatId) {
       await ctx.reply("Unable to load your shop.");
       return;
     }
 
-    const logoPath = path.join(process.cwd(), "assets", "logo4.png");
-
-    const authSession = getAuthSession(chatId);
-    if (!authSession) {
-      await ctx.reply("Please send /start first.");
+    const auth = botCtx.auth;
+    if (!auth) {
+      await ctx.reply("⚠️ I couldn’t load your account. Please try again.");
       return;
     }
 
-    const sellerWebUrl = `${config.WEBSELLER_URL}?token=${authSession.token}`;
+    const logoPath = path.join(process.cwd(), "assets", "logo4.png");
+
+    const sellerWebUrl = `${config.WEBSELLER_URL}?token=${auth.token}`;
     
 
     const message = `<i>Welcome to Campus Gebeya</i>\n<code>Buy & sell inside AASTU</code>`;

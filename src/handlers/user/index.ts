@@ -4,7 +4,7 @@ import { registerUserInformationHandler } from "./information.handler";
 import { registerBeSellerHandler } from "./BeSeller.handler";
 
 export function registerUserHandlers() {
-  registerUserNotificationsHandler();
+  // registerUserNotificationsHandler();
   registerUserInformationHandler();
   
   registerBeSellerHandler();

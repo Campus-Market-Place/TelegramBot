@@ -2,11 +2,18 @@
 import { Context, Markup } from "telegraf";
 import { getMockUserInformation } from "../../services/mockAuth.service";
 import { bot } from "../../bot/bot";
+import { BotContext } from "../../types/botContext";
 
 export function registerUserInformationHandler() {
   
   bot.command("information", async (ctx: Context) => {
     try {
+      const auth = (ctx as BotContext).auth;
+      if (!auth) {
+        await ctx.reply("⚠️ I couldn’t load your account. Please try again.");
+        return;
+      }
+
       const info = await getMockUserInformation();
 
       await ctx.reply(

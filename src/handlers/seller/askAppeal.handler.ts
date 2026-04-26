@@ -1,134 +1,121 @@
-// src/handlers/seller/askAppeal.handler.ts
 import { bot } from "../../bot/bot";
-import { getAuthSession } from "../../services/authSession.service";
-import {
-  clearPendingAppeal,
-  hasPendingAppeal,
-  setPendingAppeal
-} from "../../services/appealSession.service";
 import { submitAppeal } from "../../services/appeal.service";
 import { Context, Markup } from "telegraf";
+import { updateUserState } from "../../services/authService";
+import { BotContext, getContextState, setContextState } from "../../types/botContext";
 
-async function startAppealFlow(chatId: number): Promise<string> {
-  const authSession = getAuthSession(chatId);
-
-  if (!authSession) {
-    throw new Error("AUTH_SESSION_MISSING");
+function getAuthOrReply(ctx: BotContext) {
+  const auth = ctx.auth;
+  if (!auth) {
+    ctx.reply("⚠️ I couldn’t load your account. Please try again.");
+    return null;
   }
 
-  if (authSession.user.role !== "SELLER") {
-    throw new Error("SELLER_ONLY");
-  }
-
-  if (!authSession.user.shopid) {
-    throw new Error("SHOP_ID_MISSING");
-  }
-
-  setPendingAppeal(chatId);
-  return "Please enter your appeal reason.";
+  return auth;
 }
 
-async function submitAppealReason(chatId: number, reason: string): Promise<void> {
-  const authSession = getAuthSession(chatId);
-
-  if (!authSession) {
-    throw new Error("AUTH_SESSION_MISSING");
+async function setState(ctx: BotContext, state: string, nextContext: Record<string, unknown>) {
+  const auth = ctx.auth;
+  if (!auth) {
+    return;
   }
 
-  if (authSession.user.role !== "SELLER") {
-    throw new Error("SELLER_ONLY");
-  }
-
-  if (!authSession.user.shopid) {
-    throw new Error("SHOP_ID_MISSING");
-  }
-
-  await submitAppeal(authSession.user.shopid, reason, authSession.token);
+  const updatedUser = await updateUserState(auth.user.id, state, nextContext, auth.token);
+  setContextState(ctx, updatedUser.state ?? state, updatedUser.context ?? nextContext);
+  ctx.auth = {
+    ...auth,
+    user: {
+      ...auth.user,
+      ...updatedUser
+    }
+  };
 }
 
-async function replyAppealError(ctx: any, error: unknown): Promise<void> {
-  if (error instanceof Error) {
-    if (error.message === "AUTH_SESSION_MISSING") {
-      await ctx.reply("Please send /start first so I can load your seller account.");
-      return;
-    }
-
-    if (error.message === "SELLER_ONLY" || error.message === "SHOP_ID_MISSING") {
-      await ctx.reply("Appeals are only available for seller accounts with a shop.");
-      return;
-    }
+export async function promptAppealReason(ctx: BotContext): Promise<void> {
+  const auth = getAuthOrReply(ctx);
+  if (!auth) {
+    return;
   }
 
-  await ctx.reply(`Could not submit your appeal right now (appeal work when your shop status is warning or suspended). Please try again.`);
+  if (auth.user.role !== "SELLER" || !auth.user.shopid) {
+    await ctx.reply("Appeals are only available for seller accounts with a shop.");
+    return;
+  }
+
+  await ctx.reply("Please enter your appeal reason.");
+}
+
+async function submitAppealReason(ctx: BotContext, reason: string): Promise<void> {
+  const auth = getAuthOrReply(ctx);
+  if (!auth) {
+    return;
+  }
+
+  if (auth.user.role !== "SELLER" || !auth.user.shopid) {
+    await ctx.reply("Appeals are only available for seller accounts with a shop.");
+    return;
+  }
+
+  await submitAppeal(auth.user.shopid, reason, auth.token);
+  await setState(ctx, "APPEAL_SUMMITED", { lastAppealAt: new Date().toISOString() });
+
+  await ctx.reply(
+    "✅ Appeal submitted. Admin will review it.",
+    Markup.inlineKeyboard([[Markup.button.callback("⬅️ Back to Menu", "BACK_TO_MENU")]])
+  );
 }
 
 export function registerAskAppealHandler() {
-  // Single command for appeal
   bot.command("appeal", async (ctx: Context) => {
-    const chatId = ctx.chat?.id;
-    if (!chatId) {
-      await ctx.reply("Unable to find chat for appeal submission.");
+    const botCtx = ctx as BotContext;
+    const auth = getAuthOrReply(botCtx);
+
+    if (!auth) {
       return;
     }
 
     try {
-      /*    // const response = await getMockAskAppealResponse();
-         await ctx.reply(response);
-    */
-      const message = await startAppealFlow(chatId);
-      await ctx.reply(message);
-    } catch (error) {
-      clearPendingAppeal(chatId);
-      await replyAppealError(ctx, error);
+      await setState(botCtx, "APPEALING", {});
+      await promptAppealReason(botCtx);
+    } catch {
+      await botCtx.reply("Could not submit your appeal right now. Please try again.");
     }
   });
 
-  // Handle "Ask Appeal" button
   bot.hears("📝 Ask Appeal", async (ctx) => {
-    const chatId = ctx.chat?.id;
-    if (!chatId) {
-      await ctx.reply("Unable to find chat for appeal submission.");
+    const botCtx = ctx as BotContext;
+    const auth = getAuthOrReply(botCtx);
+
+    if (!auth) {
       return;
     }
 
     try {
-      const message = await startAppealFlow(chatId);
-      await ctx.reply(message);
-    } catch (error) {
-      clearPendingAppeal(chatId);
-      await replyAppealError(ctx, error);
+      await setState(botCtx, "APPEALING", {});
+      await promptAppealReason(botCtx);
+    } catch {
+      await botCtx.reply("Could not submit your appeal right now. Please try again.");
     }
   });
 
-  // Handle user text input for appeal reason
   bot.on("text", async (ctx, next) => {
-    const chatId = ctx.chat?.id;
+    const botCtx = ctx as unknown as BotContext;
     const text = ctx.message.text.trim();
 
-    if (!chatId || !hasPendingAppeal(chatId)) {
-      return next();
+    if (getContextState(botCtx) !== "APPEALING") {
+      await next();
+      return;
     }
 
     if (!text || text.startsWith("/")) {
-     // just skip this and perfoem a new thing with start with / command
-     return next();
-
+      await next();
+      return;
     }
 
     try {
-      await submitAppealReason(chatId, text);
-      clearPendingAppeal(chatId);
-
-      await ctx.reply(
-        "✅ Appeal submitted. Admin will review it.",
-        Markup.inlineKeyboard([
-          [Markup.button.callback("⬅️ Back to Menu", "BACK_TO_MENU")]
-        ])
-      );
-
-    } catch (error) {
-      clearPendingAppeal(chatId);
-      await replyAppealError(ctx, error);
+      await submitAppealReason(botCtx, text);
+    } catch {
+      await botCtx.reply("Could not submit your appeal right now. Please try again.");
     }
   });
 }

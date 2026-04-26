@@ -2,29 +2,37 @@ import { Markup } from "telegraf";
 import { bot } from "../../bot/bot";
 import { config } from "../../config/config";
 import path from "path";
-import { loginOrSignup } from "../../services/authService";
-import { setAuthSession } from "../../services/authSession.service";
+import { updateUserState } from "../../services/authService";
+import { BotContext, setContextState } from "../../types/botContext";
 
 export function registerBeSellerHandler() {
   bot.command("be_seller", async (ctx) => {
     try {
-      const telegramId = ctx.from?.id.toString()!;
-      const username = ctx.from?.username || "unknown";
-      const chatId = ctx.chat?.id;
+      const botCtx = ctx as unknown as BotContext;
+      const auth = botCtx.auth;
+      if (!auth) {
+        await ctx.reply("⚠️ I couldn’t load your account. Please try again.");
+        return;
+      }
 
-    if (!chatId) {
-      await ctx.reply("Chat ID not found.");
-      return;
-    }
-    
-    const auth = await loginOrSignup(telegramId, username, chatId);
-    setAuthSession(chatId, auth);
+      const username = ctx.from?.username || "unknown";
+
+      try {
+        const updatedUser = await updateUserState(auth.user.id, "TO_BE_SELLER", {}, auth.token);
+        setContextState(botCtx, updatedUser.state ?? "TO_BE_SELLER", updatedUser.context ?? {});
+        botCtx.auth = {
+          ...auth,
+          user: {
+            ...auth.user,
+            ...updatedUser
+          }
+        };
+      } catch {
+        setContextState(botCtx, "TO_BE_SELLER", {});
+      }
+
     const token = auth.token;
-    const role = auth.user.role;
-    console.log("AUTH RESPONSE:", auth);
-    const shopId = auth.user.shopid ?? null;
- 
-     
+
       const howToUseUrl = `${config.WEBREQUEST_URL}?token=${token}`;
 
       const logoPath = path.join(__dirname, "../../../assets/logo4.png"); 
@@ -35,7 +43,6 @@ export function registerBeSellerHandler() {
           caption: `<b>${username} fill the form to </b>\n<i>Become a seller</i>\n<code>after submiting the form restart the bot by send command /start</code>`,
           parse_mode: "HTML",
           reply_markup: Markup.inlineKeyboard([
-           // Markup.button.webApp("🛍fill the form ", howToUseUrl),
             [Markup.button.webApp("Fill in seller form", howToUseUrl)],
             [Markup.button.callback("⬅️ Back to Menu", "BACK_TO_MENU")]
           ]).reply_markup,
